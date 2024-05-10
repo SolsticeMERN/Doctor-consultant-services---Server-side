@@ -1,14 +1,13 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const cors = require('cors');
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
 
 // middleware
 app.use(cors());
 app.use(express.json());
-
 
 // mongodb server
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0rmazcr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -19,7 +18,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -27,47 +26,43 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-   const servicesCollection = await client.db('medConsultPro').collection('services');
-   
+    const servicesCollection = await client
+      .db("medConsultPro")
+      .collection("services");
 
-//    services related api
-   app.post('/services', async(req, res) => {
-    const newService = req.body;
-    const result = await servicesCollection.insertOne(newService);
-    console.log(result);
-    res.send(result);
-   })
+    //    services related api
+    app.post("/services", async (req, res) => {
+      const newService = req.body;
+      const result = await servicesCollection.insertOne(newService);
+      console.log(result);
+      res.send(result);
+    });
 
-    
-   app.get('/services', async(req, res) => {
-    const services = await servicesCollection.find({}).toArray();
-    res.send(services);
-   })
+    //    pagination related api
 
+    app.get("/services", async (req, res) => {
+        const size = parseInt(req.query.size);
+        const page = parseInt(req.query.page) - 1;
+        const sort = req.query.sort; // remove the () brackets
+        console.log(sort);
+        let sortQuery = {};
+        if (sort) {
+          sortQuery = { price: sort === 'asc' ? 1 : -1 };
+        }
+        const services = await servicesCollection.find({}).sort(sortQuery).skip(page * size).limit(size).toArray();
+        res.send(services);
+      });
 
-   
-//    pagination related api
-    // app.get('/services/:page', async(req, res) => {
-    //   const page = req.params.page;
-    //   const services = await servicesCollection.find({}).skip((page - 1) * 5).limit(5).toArray();
-    //   res.send(services);
-    //  })
-
-     app.get('/services/count', async(req, res) => {
+    app.get("/services/count", async (req, res) => {
       const count = await servicesCollection.countDocuments();
-      res.send({count});
-     })
-    
-
-
-
-
-
-
+      res.send({ count });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -75,27 +70,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.get('/', (req, res) => {
-  res.send('Server is Running!');
+app.get("/", (req, res) => {
+  res.send("Server is Running!");
 });
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Example app listening at http://localhost:${port}`);
 });
