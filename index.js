@@ -29,6 +29,8 @@ async function run() {
     const servicesCollection = await client
       .db("medConsultPro")
       .collection("services");
+    const popularCollection = await client.db("medConsultPro")
+    .collection("popular");
 
     //    services related api
     app.post("/services", async (req, res) => {
@@ -37,6 +39,18 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+   
+    // popular services related api
+    app.get('/popularServices', async (req, res) => {
+        const popularServices = await popularCollection.find({}).toArray();
+        res.send(popularServices);
+    })
+  
+
+
+
+
+
 
     //    pagination related api
 
