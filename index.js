@@ -30,7 +30,7 @@ async function run() {
    const servicesCollection = await client.db('medConsultPro').collection('services');
    
 
-
+//    services related api
    app.post('/services', async(req, res) => {
     const newService = req.body;
     const result = await servicesCollection.insertOne(newService);
@@ -38,10 +38,31 @@ async function run() {
     res.send(result);
    })
 
+    
    app.get('/services', async(req, res) => {
     const services = await servicesCollection.find({}).toArray();
     res.send(services);
    })
+
+
+   
+//    pagination related api
+    // app.get('/services/:page', async(req, res) => {
+    //   const page = req.params.page;
+    //   const services = await servicesCollection.find({}).skip((page - 1) * 5).limit(5).toArray();
+    //   res.send(services);
+    //  })
+
+     app.get('/services/count', async(req, res) => {
+      const count = await servicesCollection.countDocuments();
+      res.send({count});
+     })
+    
+
+
+
+
+
 
 
     // Send a ping to confirm a successful connection
