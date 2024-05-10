@@ -43,18 +43,30 @@ async function run() {
     app.get("/services", async (req, res) => {
         const size = parseInt(req.query.size);
         const page = parseInt(req.query.page) - 1;
-        const sort = req.query.sort; // remove the () brackets
-        console.log(sort);
+        const sort = req.query.sort; 
+        const search = req.query.search;
+
         let sortQuery = {};
         if (sort) {
           sortQuery = { price: sort === 'asc' ? 1 : -1 };
         }
-        const services = await servicesCollection.find({}).sort(sortQuery).skip(page * size).limit(size).toArray();
+        let query = {}
+        if (search) {
+          query = { serviceName
+            : { $regex: search, $options: "i" } };
+        }
+        const services = await servicesCollection.find(query).sort(sortQuery).skip(page * size).limit(size).toArray();
         res.send(services);
       });
 
     app.get("/services/count", async (req, res) => {
-      const count = await servicesCollection.countDocuments();
+        const search = req.query.search;
+        let query = {}
+        if (search) {
+          query = { serviceName
+            : { $regex: search, $options: "i" } };
+        }
+      const count = await servicesCollection.countDocuments(query);
       res.send({ count });
     });
 
