@@ -69,8 +69,9 @@ async function run() {
           },
         };
         const result = await servicesCollection.updateOne(filter, updateDoc, options);
-        const result2 = await popularCollection.updateOne(filter, updateDoc, options);
-        res.send({ result, result2 });
+        // const result2 = await popularCollection.updateOne(filter, updateDoc, options);
+        // res.send({ result, result2 });
+        res.send(result);
     })
 
 
