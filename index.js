@@ -48,6 +48,22 @@ async function run() {
         res.send(service);
     })
 
+    // update service related api
+    app.put('/updateService/:id', async(req, res) => {
+        const id = req.params.id;
+        const updatedService = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            ...updatedService,
+          },
+        };
+        const result = await servicesCollection.updateOne(filter, updateDoc, options);
+        const result2 = await popularCollection.updateOne(filter, updateDoc, options);
+        res.send({ result, result2 });
+    })
+
 
    
     // popular services related api
