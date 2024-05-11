@@ -47,6 +47,8 @@ async function run() {
         const service = await servicesCollection.findOne({ _id: new ObjectId(id) });
         res.send(service);
     })
+
+
    
     // popular services related api
     app.get('/popularServices', async (req, res) => {
@@ -99,6 +101,47 @@ async function run() {
       const count = await servicesCollection.countDocuments(query);
       res.send({ count });
     });
+
+
+    app.get('/manageService/:email', async(req, res) => {
+        const email = req.params.email;
+        const query = { userEmail: email }
+        const size = parseInt(req.query.size);
+        const page = parseInt(req.query.page) - 1;
+        const sort = req.query.sort; 
+        const search = req.query.search;
+
+        let sortQuery = {};
+        if (sort) {
+          sortQuery = { price: sort === 'asc' ? 1 : -1 };
+        }
+        let option = {}
+        if (search) {
+            option = { serviceName
+            : { $regex: search, $options: "i" } };
+        }
+        const services = await servicesCollection.find(query, option).sort(sortQuery).skip(page * size).limit(size).toArray();
+        res.send(services);
+    })
+
+
+    app.get("/manageService/:email/count", async (req, res) => {
+        const email = req.params.email;
+        const search = req.query.search;
+        let query = {}
+        if (search) {
+          query = { serviceName
+            : { $regex: search, $options: "i" } };
+        }
+      const count = await servicesCollection.countDocuments(query);
+      res.send({ count });
+    });
+
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
