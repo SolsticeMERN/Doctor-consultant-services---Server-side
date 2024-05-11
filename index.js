@@ -48,6 +48,15 @@ async function run() {
         res.send(service);
     })
 
+    // delete service related api
+    app.delete('/deleteService/:id', async(req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await servicesCollection.deleteOne(filter);
+        // const result2 = await popularCollection.deleteOne(filter);
+        res.send(result);
+    })
+
     // update service related api
     app.put('/updateService/:id', async(req, res) => {
         const id = req.params.id;
