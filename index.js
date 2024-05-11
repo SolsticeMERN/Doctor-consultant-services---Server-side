@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
@@ -31,6 +31,8 @@ async function run() {
       .collection("services");
     const popularCollection = await client.db("medConsultPro")
     .collection("popular");
+    const bookingCollection = await client.db("medConsultPro")
+    .collection("booking");
 
     //    services related api
     app.post("/services", async (req, res) => {
@@ -39,6 +41,12 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+    app.get('/servicesDetails/:id', async(req, res) => {
+        const id = req.params.id;
+        const service = await servicesCollection.findOne({ _id: new ObjectId(id) });
+        res.send(service);
+    })
    
     // popular services related api
     app.get('/popularServices', async (req, res) => {
@@ -46,7 +54,15 @@ async function run() {
         res.send(popularServices);
     })
   
-
+   
+    // booking service related api
+    app.post('/booking', async (req, res) => {
+        const newBooking = req.body;
+        console.log(newBooking);
+        const result = await bookingCollection.insertOne(newBooking);
+        console.log(result);
+        res.send(result);
+    })
 
 
 
