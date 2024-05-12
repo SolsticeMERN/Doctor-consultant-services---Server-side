@@ -101,8 +101,8 @@ async function run() {
 
     app.get('/servicesToDo/:email', async (req, res) => {
         const email = req.params.email;
-        // const query = { providerEmail: email }
-        const booking = await bookingCollection.find({ providerEmail: email }).toArray();
+        const query = { providerEmail: email }
+        const booking = await bookingCollection.find(query).toArray();
         res.send(booking);
     })
     
