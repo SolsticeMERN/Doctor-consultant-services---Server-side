@@ -33,20 +33,19 @@ const client = new MongoClient(uri, {
 // middlwares
 const tokenVerify = (req, res, next) => {
   const token = req?.cookies?.token;
-  console.log('token verify', token);
-  if(!token){
-    return res.status(401).send({message: 'unauthorized access'});
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
   }
-  if(token){
+  if (token) {
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
-        return res.status(401).send({message: 'unauthorized access'});
+        return res.status(401).send({ message: "unauthorized access" });
       }
       req.user = decoded;
       next();
     });
   }
-}
+};
 
 async function run() {
   try {
@@ -76,12 +75,12 @@ async function run() {
       res.send({ success: true });
     });
 
-    app.post('/logout', async(req, res) => {
+    app.post("/logout", async (req, res) => {
       const user = req.body;
-      console.log('logout user', user);
-      res.clearCookie("token", {maxAge: 0});
+      console.log("logout user", user);
+      res.clearCookie("token", { maxAge: 0 });
       res.send({ success: true });
-    })
+    });
 
     //    services related api
     app.post("/services", async (req, res) => {
@@ -136,21 +135,25 @@ async function run() {
     });
 
     // booking service related api
-    app.post("/booking",  async (req, res) => {
+    app.post("/booking", async (req, res) => {
       const newBooking = req.body;
-      console.log(newBooking);
+      const query = {
+        userEmail: newBooking.userEmail,
+        serviceId: newBooking.serviceId,
+      };
+      const alreadyBooking = await bookingCollection.findOne(query);
+      if (alreadyBooking) {
+        return res.status(400).send("you already booked this service");
+      }
       const result = await bookingCollection.insertOne(newBooking);
-      console.log(result);
       res.send(result);
     });
 
     app.get("/booking/:email", tokenVerify, async (req, res) => {
       const tokenOwner = req.user.email;
       const email = req.params.email;
-      console.log("user",email);
-      console.log('tokenOwner',tokenOwner);
-      if(email !== tokenOwner){
-        return res.status(403).send({message: 'forbidden access'});
+      if (email !== tokenOwner) {
+        return res.status(403).send({ message: "forbidden access" });
       }
       const query = { userEmail: email };
       const booking = await bookingCollection.find(query).toArray();
@@ -160,10 +163,8 @@ async function run() {
     app.get("/servicesToDo/:email", tokenVerify, async (req, res) => {
       const tokenOwner = req.user?.email;
       const email = req.params?.email;
-      console.log("user",email);
-      console.log('tokenOwner',tokenOwner);
-      if(email !== tokenOwner){
-        return res.status(403).send({message: 'forbidden access'});
+      if (email !== tokenOwner) {
+        return res.status(403).send({ message: "forbidden access" });
       }
       const query = { providerEmail: email };
       const booking = await bookingCollection.find(query).toArray();
