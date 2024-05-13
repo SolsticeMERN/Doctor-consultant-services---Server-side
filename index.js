@@ -1,7 +1,7 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -10,11 +10,10 @@ const port = process.env.PORT || 3000;
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  })
-);
+      origin: ['http://localhost:5173', 'https://assignment-10-medconsultpro.web.app'],
+      credentials: true,
+  }),
+)
 app.use(express.json());
 app.use(cookieParser());
 
@@ -34,12 +33,12 @@ const client = new MongoClient(uri, {
 const tokenVerify = (req, res, next) => {
   const token = req?.cookies?.token;
   if (!token) {
-    return res.status(401).send({ message: "unauthorized access" });
+    return res.status(401).send({ message: "no token access" });
   }
   if (token) {
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
-        return res.status(401).send({ message: "unauthorized access" });
+        return res.status(401).send({ message: "token verification error" });
       }
       req.user = decoded;
       next();
@@ -50,14 +49,11 @@ const tokenVerify = (req, res, next) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const servicesCollection = await client
       .db("medConsultPro")
       .collection("services");
-    const popularCollection = await client
-      .db("medConsultPro")
-      .collection("popular");
     const bookingCollection = await client
       .db("medConsultPro")
       .collection("booking");
@@ -65,7 +61,9 @@ async function run() {
     // //  auth related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.SECRET_KEY, { expiresIn: "1h" });
+      const token = jwt.sign(user, process.env.SECRET_KEY, {
+        expiresIn: "1d",
+      });
 
       res.cookie("token", token, {
         httpOnly: true,
@@ -75,18 +73,22 @@ async function run() {
       res.send({ success: true });
     });
 
-    app.post("/logout", async (req, res) => {
-      const user = req.body;
-      console.log("logout user", user);
-      res.clearCookie("token", { maxAge: 0 });
-      res.send({ success: true });
-    });
+    app.post('/logout', async (req, res) => {
+      const user = req.body
+      res
+          .clearCookie('token', {
+              maxAge: 0,
+              secure: process.env.NODE_ENV === 'production' ? true : false,
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+          })
+          .send({ status: true })
+  })
+  
 
     //    services related api
     app.post("/services", async (req, res) => {
       const newService = req.body;
       const result = await servicesCollection.insertOne(newService);
-      console.log(result);
       res.send(result);
     });
 
@@ -103,7 +105,6 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await servicesCollection.deleteOne(filter);
-      // const result2 = await popularCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -123,14 +124,12 @@ async function run() {
         updateDoc,
         options
       );
-      // const result2 = await popularCollection.updateOne(filter, updateDoc, options);
-      // res.send({ result, result2 });
       res.send(result);
     });
 
     // popular services related api
     app.get("/popularServices", async (req, res) => {
-      const popularServices = await popularCollection.find({}).toArray();
+      const popularServices = await servicesCollection.find({}).limit(6).toArray();
       res.send(popularServices);
     });
 
@@ -219,7 +218,6 @@ async function run() {
 
     app.get("/manageService/:email", tokenVerify, async (req, res) => {
       const email = req.params.email;
-      console.log(email);
       const query = { userEmail: email };
       const size = parseInt(req.query.size);
       const page = parseInt(req.query.page) - 1;
